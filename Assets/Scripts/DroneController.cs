@@ -57,7 +57,7 @@ public class DroneController : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         // We set the Rigidbody's angular drag here. 
         // 0.5 is a good value, but we add our own yawDamping on top.
-        rb.angularDamping = 0.5f;
+        // rb.angularDamping = 0.5f;
     }
 
     void FixedUpdate()
@@ -70,12 +70,17 @@ public class DroneController : MonoBehaviour
         // --- Throttle (Processed) ---
         // We now apply throttle expo to make hovering easier
         float processedThrottle = ApplyExpo(throttleInput, throttleExpo);
+
+        // float hoverAccel = Physics.gravity.magnitude;
+        // float thrustAccel = processedThrottle * thrustForce;
+        // rb.AddForce(transform.up * (hoverAccel + thrustAccel), ForceMode.Acceleration);
+
         rb.AddForce(transform.up * (processedThrottle * thrustForce), ForceMode.Acceleration);
 
         // --- Yaw (Processed + Damped) ---
         // This is the FIX for your yaw spin in Angle Mode.
         float processedYaw = ApplyExpo(yawInput, acroExpo) * yawTorque;
-        
+
         // Get the current yaw rotation speed
         float currentYawRate = transform.InverseTransformDirection(rb.angularVelocity).y;
         // Apply a damping force to stop rotation when the stick is centered
@@ -98,6 +103,25 @@ public class DroneController : MonoBehaviour
                 HandleHorizonMode();
                 break;
         }
+
+        CustomDamping();
+    }
+
+    void CustomDamping()
+    {
+        // --- Directional air drag (makes turns feel lighter) ---
+        Vector3 localVel = transform.InverseTransformDirection(rb.linearVelocity);
+
+        // Sideways drag (left/right)
+        localVel.x *= 0.98f;
+
+        // Forward drag (very light)
+        localVel.z *= 0.99f;
+
+        // Vertical damping (slightly stronger)
+        localVel.y *= 0.90f;
+
+        rb.linearVelocity = transform.TransformDirection(localVel);
     }
 
     /// <summary>
@@ -195,7 +219,7 @@ public class DroneController : MonoBehaviour
         float rawInput = value.Get<float>();
         // We still remap from [-1, 1] to [0, 1]
         // But the *application* of this value is now handled by HandleMovement
-        throttleInput = (rawInput + 1f) / 2f; 
+        throttleInput = (rawInput + 1f) / 2f;
     }
 
     public void OnYaw(InputValue value)
@@ -215,7 +239,7 @@ public class DroneController : MonoBehaviour
         // Apply deadzone as soon as we get the input
         rollInput = ApplyDeadzone(value.Get<float>());
     }
-    
+
     public void OnFlightModes(InputValue value)
     {
         float rzValue = value.Get<float>();

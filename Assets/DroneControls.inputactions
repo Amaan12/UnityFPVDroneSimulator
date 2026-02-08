@@ -66,6 +66,17 @@
                 },
                 {
                     "name": "",
+                    "id": "9b110c88-32bc-4517-b02a-e67f542c4d59",
+                    "path": "<HID::EdgeTX Radiomaster Pocket Joystick>/z",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Throttle",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "dc4f8c8d-3c66-4a16-b3bf-b9f54052883d",
                     "path": "<HID::OpenTX Radiomaster Pocket Joystick>/rx",
                     "interactions": "",
@@ -77,8 +88,19 @@
                 },
                 {
                     "name": "",
-                    "id": "17c99d0b-be97-4233-81bd-ce0e2e42dc0d",
-                    "path": "<Joystick>/stick/y",
+                    "id": "0e3b532d-c56f-4764-93f2-fc91f7a2fa76",
+                    "path": "<HID::EdgeTX Radiomaster Pocket Joystick>/rx",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Yaw",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "92fae2f9-f941-40b8-a5c6-13ea102fdaf2",
+                    "path": "<HID::EdgeTX Radiomaster Pocket Joystick>/stick/y",
                     "interactions": "",
                     "processors": "Invert",
                     "groups": "",
@@ -88,8 +110,8 @@
                 },
                 {
                     "name": "",
-                    "id": "24f888ef-cf71-449d-8324-edf343969538",
-                    "path": "<Joystick>/stick/x",
+                    "id": "0e6d841a-ddda-4da8-a41a-6ed98b8fbd4f",
+                    "path": "<HID::EdgeTX Radiomaster Pocket Joystick>/stick/x",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -101,6 +123,17 @@
                     "name": "",
                     "id": "ed57166e-48dc-4aed-9745-f7f480e4492e",
                     "path": "<HID::OpenTX Radiomaster Pocket Joystick>/rz",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "FlightModes",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "b04ccbc3-38cb-4c85-b33e-ebd1a94ef493",
+                    "path": "<Keyboard>/a",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
