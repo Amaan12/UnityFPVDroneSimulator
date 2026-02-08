@@ -48,9 +48,9 @@ public class DroneController : MonoBehaviour
     public Rigidbody Rb => rb;
     // --- END OF PUBLIC PROPERTIES ---
 
-    // Private variables
-    private Rigidbody rb;
-    private float throttleInput, yawInput, pitchInput, rollInput;
+    // variables
+    Rigidbody rb;
+    float throttleInput, yawInput, pitchInput, rollInput;
 
     void Awake()
     {
@@ -65,11 +65,18 @@ public class DroneController : MonoBehaviour
         HandleMovement();
     }
 
-    private void HandleMovement()
+    [SerializeField] float dragCoefficient = 0.3f; // start small
+    
+    void HandleMovement()
     {
         // --- Throttle (Processed) ---
         // We now apply throttle expo to make hovering easier
         float processedThrottle = ApplyExpo(throttleInput, throttleExpo);
+        // CustomLinearDamping(processedThrottle);
+
+        Vector3 dragForce = QuadraticAirDrag(rb.linearVelocity, dragCoefficient);
+        rb.AddForce(dragForce, ForceMode.Force);
+
 
         // float hoverAccel = Physics.gravity.magnitude;
         // float thrustAccel = processedThrottle * thrustForce;
@@ -104,30 +111,77 @@ public class DroneController : MonoBehaviour
                 break;
         }
 
-        CustomDamping();
+        // CustomDamping();
+
+
+    }
+
+    Vector3 QuadraticAirDrag(Vector3 velocity, float k)
+    {
+        float speed = velocity.magnitude;
+
+        if (speed < 0.001f)
+            return Vector3.zero;
+
+        // -k * |v| * v   (equivalent to -k * v^2 * direction)
+        return -k * speed * velocity;
+    }
+
+
+    void CustomLinearDamping(float throttleInput)
+    {
+        // --- Linear damping proportional to thrust ---
+
+        // Tune these
+        float minLinearDamping = 0.3f;  // floaty at low thrust
+        float maxLinearDamping = 3.0f;   // snappy at high thrust
+
+        // processedThrottle should be 0..1
+        rb.linearDamping = Mathf.Lerp(
+            minLinearDamping,
+            maxLinearDamping,
+            throttleInput
+        );
     }
 
     void CustomDamping()
     {
+        // --- Drag in plane perpendicular to thrust (NOT along thrust) ---
+
+        Vector3 velocity = rb.linearVelocity;
+
+        // Component ALONG thrust (keep this)
+        Vector3 verticalVel = Vector3.Project(velocity, transform.up);
+
+        // Component IN PLANE perpendicular to thrust (drag this)
+        Vector3 planarVel = velocity - verticalVel;
+
+        // Apply planar drag
+        float planarDrag = 0.98f; // tune this (0.97–0.995)
+        planarVel *= planarDrag;
+
+        // Recombine
+        rb.linearVelocity = verticalVel + planarVel;
+
         // --- Directional air drag (makes turns feel lighter) ---
-        Vector3 localVel = transform.InverseTransformDirection(rb.linearVelocity);
+        // Vector3 localVel = transform.InverseTransformDirection(rb.linearVelocity);
 
         // Sideways drag (left/right)
-        localVel.x *= 0.98f;
+        // localVel.x *= 0.9f;
 
         // Forward drag (very light)
-        localVel.z *= 0.99f;
+        // localVel.z *= 0.99f;
 
         // Vertical damping (slightly stronger)
-        localVel.y *= 0.90f;
+        // localVel.y *= 0.99f;
 
-        rb.linearVelocity = transform.TransformDirection(localVel);
+        // rb.linearVelocity = transform.TransformDirection(localVel);
     }
 
     /// <summary>
     /// ACRO MODE: Processed stick input controls the rate of rotation.
     /// </summary>
-    private void HandleAcroMode()
+    void HandleAcroMode()
     {
         // Apply Expo to our deadzoned input
         float processedPitch = ApplyExpo(pitchInput, acroExpo);
@@ -141,7 +195,7 @@ public class DroneController : MonoBehaviour
     /// <summary>
     /// ANGLE MODE: Raw (but deadzoned) stick input controls the target angle.
     /// </summary>
-    private void HandleAngleMode()
+    void HandleAngleMode()
     {
         // We use the *raw* (but deadzoned) input here because we want a linear
         // mapping from stick position to target angle.
@@ -166,7 +220,7 @@ public class DroneController : MonoBehaviour
     /// <summary>
     /// HORIZON MODE: Mix of Acro and Angle.
     /// </summary>
-    private void HandleHorizonMode()
+    void HandleHorizonMode()
     {
         // 1. Apply Acro torque (with Expo)
         float processedPitch = ApplyExpo(pitchInput, acroExpo);
@@ -185,7 +239,7 @@ public class DroneController : MonoBehaviour
     /// <summary>
     /// Helper to convert Euler angles from 0-360 to -180-180 range.
     /// </summary>
-    private float ConvertAngle(float eulerAngle)
+    float ConvertAngle(float eulerAngle)
     {
         return (eulerAngle > 180) ? eulerAngle - 360 : eulerAngle;
     }
@@ -193,7 +247,7 @@ public class DroneController : MonoBehaviour
     /// <summary>
     /// Applies a deadzone to the raw input.
     /// </summary>
-    private float ApplyDeadzone(float input)
+    float ApplyDeadzone(float input)
     {
         if (Mathf.Abs(input) < inputDeadzone)
         {
@@ -206,7 +260,7 @@ public class DroneController : MonoBehaviour
     /// <summary>
     // Applies an exponential curve to the input.
     /// </summary>
-    private float ApplyExpo(float input, float expo)
+    float ApplyExpo(float input, float expo)
     {
         // Simple cubic expo formula: (expo * input^3) + ((1-expo) * input)
         return (expo * (input * input * input)) + ((1f - expo) * input);
